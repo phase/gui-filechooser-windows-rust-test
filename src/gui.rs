@@ -12,8 +12,10 @@
 #![allow(dead_code)]
 
 extern crate rand;
+extern crate nfd;
 
 use conrod;
+use self::nfd::Response;
 use std;
 
 pub const WIN_W: u32 = 600;
@@ -26,11 +28,11 @@ pub struct DemoApp {
     ball_color: conrod::Color,
     sine_frequency: f32,
     rust_logo: conrod::image::Id,
+    chosen_file: String,
 }
 
 
 impl DemoApp {
-
     /// Simple constructor for the `DemoApp`.
     pub fn new(rust_logo: conrod::image::Id) -> Self {
         DemoApp {
@@ -38,9 +40,9 @@ impl DemoApp {
             ball_color: conrod::color::WHITE,
             sine_frequency: 1.0,
             rust_logo: rust_logo,
+            chosen_file: "none".to_string(),
         }
     }
-
 }
 
 
@@ -78,6 +80,11 @@ widget_ids! {
         // The title and introduction widgets.
         title,
         introduction,
+
+        // File chooser
+        file_chooser_title,
+        file_chooser_button,
+        file_chooser_text,
 
         // Shapes.
         shapes_canvas,
@@ -130,7 +137,7 @@ pub fn gui(ui: &mut conrod::UiCell, ids: &Ids, app: &mut DemoApp) {
     // `Canvas` is a widget that provides some basic functionality for laying out children widgets.
     // By default, its size is the size of the window. We'll use this as a background for the
     // following widgets, as well as a scrollable container for the children widgets.
-    const TITLE: &'static str = "All Widgets";
+    const TITLE: &'static str = "Rust GUI & File Chooser Test";
     widget::Canvas::new().pad(MARGIN).scroll_kids_vertically().set(ids.canvas, ui);
 
 
@@ -149,7 +156,7 @@ pub fn gui(ui: &mut conrod::UiCell, ids: &Ids, app: &mut DemoApp) {
         is one of several special \"primitive\" widget types which are used to construct \
         all other widget types. These types are \"special\" in the sense that conrod knows \
         how to render them via `conrod::render::Primitive`s.\
-        \n\nScroll down to see more widgets!";
+        \n\nScroll down to see more widgets!\n\n(file chooser example added)";
     widget::Text::new(INTRODUCTION)
         .padded_w_of(ids.canvas, MARGIN)
         .down(60.0)
@@ -158,6 +165,40 @@ pub fn gui(ui: &mut conrod::UiCell, ids: &Ids, app: &mut DemoApp) {
         .line_spacing(5.0)
         .set(ids.introduction, ui);
 
+    ////
+    //// File chooser test
+    ////
+
+    widget::Text::new("File Chooser")
+        .down(70.0)
+        .align_middle_x_of(ids.canvas)
+        .font_size(SUBTITLE_SIZE)
+        .set(ids.file_chooser_title, ui);
+
+    for _press in widget::Button::new()
+        .label("Choose File")
+        .mid_left_with_margin_on(ids.file_chooser_title, MARGIN)
+        .down_from(ids.file_chooser_title, 60.0)
+        .w_h(130.0, 65.0)
+        .set(ids.file_chooser_button, ui)
+        {
+            let result = nfd::dialog().filter("jpg").open().unwrap_or_else(|e| {
+                panic!(e);
+            });
+            match result {
+                Response::Okay(file_path) => {
+                    println!("File path = {:?}", file_path);
+                    app.chosen_file = file_path;
+                }
+                Response::Cancel => println!("User canceled"),
+                _ => (),
+            }
+        }
+
+    widget::Text::new(&app.chosen_file)
+        .down(30.0)
+        .align_middle_x_of(ids.canvas)
+        .set(ids.file_chooser_text, ui);
 
     ////////////////////////////
     ///// Lines and Shapes /////
@@ -350,5 +391,4 @@ pub fn gui(ui: &mut conrod::UiCell, ids: &Ids, app: &mut DemoApp) {
 
 
     widget::Scrollbar::y_axis(ids.canvas).auto_hide(true).set(ids.canvas_scrollbar, ui);
-
 }

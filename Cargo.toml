@@ -1,0 +1,11 @@
+[package]
+name = "gui-filechooser-windows-rust-test"
+version = "0.1.0"
+authors = ["Jadon Fowler <jadonflower@gmail.com>"]
+
+[dependencies]
+conrod = { version = "0.61.1", features = ["glium", "winit"] }
+image = "0.19.0"
+find_folder = "0.3.0"
+rand = "0.5.4"
+nfd = "0.0.4"
